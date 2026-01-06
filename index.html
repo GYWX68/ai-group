@@ -2,8 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <title>AI 员工讨论组 - 同时对话版</title>
-    <!-- 关键修复：增加 viewport-fit=cover 适配刘海屏，防止 iOS 缩放 -->
+    <title>ENTP 讨论组</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,7 +10,6 @@
             --accent: #10a37f;
             --bg-chat: #f4f7f9;
         }
-        /* 修复 iOS H-Screen 遮挡问题：优先使用 svh (Small Viewport Height) */
         body { 
             background-color: var(--bg-chat); 
             -webkit-tap-highlight-color: transparent;
@@ -30,10 +28,9 @@
             max-width: 88%;
             transition: all 0.2s ease;
         }
-        .ai-bubble { border-left: 4px solid var(--accent); }
-        .user-bubble { background-color: var(--accent); color: white; }
+        .ai-bubble { border-left: 4px solid #8b5cf6; } /* 紫色调符合 ENTP 视觉 */
+        .user-bubble { background-color: #8b5cf6; color: white; }
         
-        /* 隐藏默认滚动条，美化显示 */
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
         
@@ -45,10 +42,41 @@
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-        /* 修复 iPhone 底部“小横条”遮挡 */
         .safe-area-bottom {
             padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
         }
+        
+        .conflict-tag {
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: #ede9fe;
+            color: #7c3aed;
+            font-weight: bold;
+        }
+
+        .summary-card {
+            background: #fff;
+            border: 2px solid #8b5cf6;
+            border-radius: 1.5rem;
+            overflow: hidden;
+        }
+        .summary-header {
+            background: #8b5cf6;
+            color: white;
+            padding: 8px 16px;
+            font-weight: 900;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-content {
+            padding: 16px;
+            color: #1e1b4b;
+            line-height: 1.6;
+        }
+        .summary-content strong { color: #6d28d9; border-bottom: 2px solid #ddd6fe; }
     </style>
 </head>
 <body class="overflow-hidden">
@@ -57,20 +85,20 @@
     <!-- Header -->
     <header class="h-14 border-b flex items-center justify-between px-4 bg-white shrink-0 z-10">
         <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-            <h1 class="text-base font-bold text-gray-800">AI 员工讨论组</h1> 
+            <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+            <h1 class="text-base font-bold text-gray-800">ENTP 讨论组</h1>
         </div>
-        <div class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">iOS_OPTIMIZED_V2.2</div>
+        <div class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">DEBATER_V3.8</div>
     </header>
 
-    <!-- Chat Area: 确保 flex-1 占据剩余空间并可滚动 -->
+    <!-- Chat Area -->
     <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-5 bg-slate-50" ref="msgBox">
         <div v-if="history.length === 0" class="text-center py-12">
             <div class="inline-block p-6 bg-white rounded-3xl shadow-sm border border-gray-100 mx-4">
                 <p class="text-gray-400 text-sm leading-relaxed">
-                    向您的 AI 员工们下达指令，<br>
-                    观察他们如何并发协作。<br>
-                    <span class="text-[10px] mt-2 block opacity-60">(iOS 已完成兼容性修复)</span>
+                    欢迎来到 ENTP 集中营。<br>
+                    在此发起挑战，四个 ENTP 将基于上下文持续拆台。<br>
+                    <span class="text-[10px] mt-2 block text-purple-500 font-bold underline decoration-wavy">提示：输入“帮我总结”可获取讨论纪要</span>
                 </p>
             </div>
         </div>
@@ -78,12 +106,15 @@
         <div v-for="(m, index) in history" :key="index" :class="['flex w-full', m.role === 'user' ? 'justify-end' : 'justify-start']">
             <!-- AI Response -->
             <div v-if="m.role === 'ai'" class="flex gap-2 max-w-[95%]">
-                <div class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 font-bold text-white text-[10px]">
+                <div :class="['w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-white text-[10px]', m.color || 'bg-slate-800']">
                     {{ m.model[0] }}
                 </div>
                 <div class="message-bubble ai-bubble bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-1 gap-4">
-                        <span class="text-[10px] font-black text-slate-700 uppercase">员工：{{ m.model }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-black text-slate-700 uppercase">{{ m.model }}</span>
+                            <span v-if="m.isCounter" class="conflict-tag">拆个台</span>
+                        </div>
                         <span class="text-[8px] text-gray-300 font-mono">{{ m.time }}</span>
                     </div>
                     <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px]">{{ m.text }}</div>
@@ -102,23 +133,23 @@
                 <div class="px-2 py-1 bg-gray-100 rounded-full flex items-center gap-1">
                     <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
                 </div>
-                <div class="text-[10px] text-blue-600 font-bold italic">您的AI员工们正在激烈讨论中...</div>
+                <div class="text-[10px] text-purple-600 font-bold italic">ENTP 们正在疯狂博弈中...</div>
             </div>
         </div>
 
-        <!-- Conclusion -->
-        <div v-if="unifiedAnswer" class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl shadow-inner mb-4">
-            <h3 class="flex items-center gap-2 text-blue-700 font-bold mb-2 text-xs">
+        <!-- Structured Conclusion (Only shows when requested) -->
+        <div v-if="unifiedAnswer" class="mt-6 mb-8 summary-card shadow-lg">
+            <div class="summary-header">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
                 </svg>
-                最终执行共识报告
-            </h3>
-            <p class="text-blue-900 text-sm leading-relaxed">{{ unifiedAnswer }}</p>
+                讨论组脑洞纪要
+            </div>
+            <div class="summary-content text-[14px] whitespace-pre-wrap" v-html="formattedUnifiedAnswer"></div>
         </div>
     </main>
 
-    <!-- Footer: 关键修复，使用 flex-shrink-0 并固定在底部 -->
+    <!-- Footer -->
     <footer class="p-3 bg-white border-t safe-area-bottom shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div class="relative flex items-center">
             <input 
@@ -126,16 +157,16 @@
                 @keyup.enter="send"
                 :disabled="lock"
                 type="text" 
-                placeholder="给员工下达任务..." 
-                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm appearance-none"
+                placeholder="继续杠下去，或者要求“总结一下”..." 
+                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm appearance-none"
             />
             <button 
                 @click="send"
                 :disabled="lock || !userQuestion.trim()"
-                class="absolute right-1.5 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 transition-colors shadow-sm"
+                class="absolute right-1.5 p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-gray-300 transition-colors shadow-sm"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
             </button>
         </div>
@@ -144,7 +175,6 @@
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script>
-// 同样由于 iPhone 环境，如果 API 没反应，可能是因为 API 的域名禁止了直接跨域访问
 const KEYS = {
     moonshot: "sk-tg76T0lmYK7vqnkaXjyGEYagpYvlhJLqVVhF6DawKKxIOYwl",
     deepseek: "sk-4947a41f719647d9b4fdbc647a92e9fd",
@@ -154,11 +184,6 @@ const KEYS = {
 
 async function apiCall(url, key, model, messages) {
     let cleanMessages = messages.filter(m => m.content && m.content.trim() !== "");
-    const last = cleanMessages[cleanMessages.length - 1];
-    if (last && last.role !== 'user') {
-        cleanMessages.push({ role: 'user', content: "请根据上述背景汇报。" });
-    }
-
     try {
         const res = await fetch(url, {
             method: "POST",
@@ -169,7 +194,7 @@ async function apiCall(url, key, model, messages) {
             body: JSON.stringify({
                 model: model,
                 messages: cleanMessages,
-                temperature: 0.7
+                temperature: 1.0 
             })
         });
         const data = await res.json();
@@ -181,10 +206,10 @@ async function apiCall(url, key, model, messages) {
 }
 
 const bots = [
-    { name: "Kimi", key: KEYS.moonshot, model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions" },
-    { name: "DeepSeek", key: KEYS.deepseek, model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions" },
-    { name: "智谱 GLM", key: KEYS.zhipu, model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions" },
-    { name: "百川 AI", key: KEYS.baichuan, model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions" }
+    { name: "DeepSeek", color: "bg-blue-600", key: KEYS.deepseek, model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions", persona: "你是一个智力自负的 ENTP。你喜欢用精密的逻辑陷阱来戏弄对方，语气充满玩世不恭。" },
+    { name: "Kimi", color: "bg-orange-500", key: KEYS.moonshot, model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions", persona: "你是一个语速极快、思维跳跃的 ENTP。你根本不在乎立场，只在乎推翻当下结论。" },
+    { name: "智谱", color: "bg-indigo-600", key: KEYS.zhipu, model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions", persona: "你是一个善于质疑权威的 ENTP。你最讨厌陈词滥调，总是从相反角度切入证明其荒谬。" },
+    { name: "百川", color: "bg-pink-600", key: KEYS.baichuan, model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions", persona: "你是一个混乱中立的 ENTP。你喜欢通过‘如果……那么……’的极限推导带偏讨论。" }
 ].filter(b => b.key);
 
 const { createApp } = Vue;
@@ -194,9 +219,18 @@ createApp({
         return {
             userQuestion: "",
             history: [],
+            fullContextLog: [], 
             unifiedAnswer: "",
             lock: false
         };
+    },
+    computed: {
+        formattedUnifiedAnswer() {
+            if (!this.unifiedAnswer) return "";
+            return this.unifiedAnswer
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
     },
     methods: {
         async send() {
@@ -204,51 +238,76 @@ createApp({
 
             const input = this.userQuestion.trim();
             this.lock = true;
-            this.unifiedAnswer = "";
+            this.unifiedAnswer = ""; // 重置总结显示
+
+            // 检查用户是否在请求总结
+            const isRequestingSummary = /总结|汇总|纪要|综述|结果/.test(input);
+
+            this.pushMessage("user", input, "发起者");
+            this.fullContextLog.push({ role: "Boss", text: input });
             this.userQuestion = "";
 
-            this.pushMessage("user", input, "Boss");
-
             try {
-                const results = await Promise.all(bots.map(async (bot) => {
+                // 1. 常规辩论流程
+                for (let i = 0; i < bots.length; i++) {
+                    const bot = bots[i];
                     try {
-                        const content = await apiCall(bot.url, bot.key, bot.model, [
-                            { role: "system", content: "你是一位高效的AI员工。请独立分析Boss提出的问题，字数120以内。" },
-                            { role: "user", content: input }
-                        ]);
-                        this.pushMessage("ai", content, bot.name);
-                        this.scrollToBottom();
-                        return { name: bot.name, content };
-                    } catch (e) {
-                        this.pushMessage("ai", `[汇报异常: ${e.message}]`, bot.name);
-                        return null;
-                    }
-                }));
+                        const contextString = this.fullContextLog
+                            .map(entry => `[${entry.role}]: ${entry.text}`)
+                            .join("\n\n");
 
-                const validOnes = results.filter(r => r !== null);
-                if (validOnes.length > 0) {
-                    const sumBot = bots[0];
-                    const summaryContext = validOnes.map(v => `[${v.name}]: ${v.content}`).join('\n\n');
-                    const summary = await apiCall(sumBot.url, sumBot.key, sumBot.model, [
-                        { role: "system", content: "你是秘书长。请汇总各位员工的意见，给Boss提交一份建议。" },
-                        { role: "user", content: `原指令：${input}\n\n员工汇报：\n${summaryContext}\n\n请总结：` }
+                        const prompt = [
+                            { 
+                                role: "system", 
+                                content: `${bot.persona} 你在 ENTP 讨论组中。基于【历史对话】回怼前人，禁止复读，字数 90 以内。` 
+                            },
+                            { role: "user", content: `【历史对话】：\n${contextString}\n\n请发言：` }
+                        ];
+
+                        const content = await apiCall(bot.url, bot.key, bot.model, prompt);
+                        
+                        this.pushMessage("ai", content, bot.name, bot.color, i > 0);
+                        this.fullContextLog.push({ role: bot.name, text: content });
+                        this.scrollToBottom();
+                        
+                        await new Promise(r => setTimeout(r, 400));
+                        
+                    } catch (e) {
+                        this.pushMessage("ai", `[思维故障: ${e.message}]`, bot.name, "bg-gray-400", false);
+                    }
+                }
+
+                // 2. 只有在主动要求总结时才生成总结卡片
+                if (isRequestingSummary) {
+                    const summaryContext = this.fullContextLog
+                        .map(entry => `[${entry.role}]: ${entry.text}`)
+                        .join("\n\n");
+
+                    const summary = await apiCall(bots[0].url, bots[0].key, bots[0].model, [
+                        { 
+                            role: "system", 
+                            content: `你是一个观察者。请总结上述 ENTP 的乱斗内容。包含：🚩 核心逻辑崩坏点、⚔️ 脑洞大逃杀、💡 最终伪共识。` 
+                        },
+                        { role: "user", content: `交锋纪录：\n${summaryContext}\n\n请提交总结：` }
                     ]);
                     this.unifiedAnswer = summary;
                 }
 
             } catch (err) {
-                console.error("执行失败:", err);
+                console.error("对话异常:", err);
             } finally {
                 this.lock = false;
                 this.scrollToBottom();
             }
         },
 
-        pushMessage(role, text, model) {
+        pushMessage(role, text, model, color, isCounter = false) {
             this.history.push({
                 role,
                 text,
                 model,
+                color,
+                isCounter,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
         },
