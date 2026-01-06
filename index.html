@@ -2,184 +2,137 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <title>ENTP 集中营</title>
+    <title>ENTP 逻辑狂想曲</title>  
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --accent: #8b5cf6;
-            --bg-chat: #f4f7f9;
+            --wechat-bg: #ededed;
+            --wechat-green: #95ec69;
+            --wechat-white: #ffffff;
+            --wechat-text: #191919;
+            --wechat-gray: #b2b2b2;
         }
         body { 
-            background-color: var(--bg-chat); 
+            background-color: var(--wechat-bg); 
             -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
             height: 100vh;
-            height: 100svh;
             margin: 0;
             overflow: hidden;
+            color: var(--wechat-text);
         }
-        #app {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .message-bubble {
-            max-width: 88%;
-            transition: all 0.2s ease;
-        }
-        .ai-bubble { border-left: 4px solid #8b5cf6; }
-        .user-bubble { background-color: #8b5cf6; color: white; }
+        #app { height: 100%; display: flex; flex-direction: column; }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-        .typing-dot {
-            width: 4px; height: 4px; background: #aaa; border-radius: 50%;
-            display: inline-block; animation: blink 1.4s infinite both;
+        .bubble {
+            position: relative;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.4;
+            max-width: 100%;
+            word-wrap: break-word;
         }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
+        .bubble-left { background-color: var(--wechat-white); margin-left: 10px; }
+        .bubble-left::before {
+            content: ""; position: absolute; left: -10px; top: 12px;
+            border-width: 5px; border-style: solid;
+            border-color: transparent var(--wechat-white) transparent transparent;
+        }
+
+        .bubble-right { background-color: var(--wechat-green); margin-right: 10px; }
+        .bubble-right::after {
+            content: ""; position: absolute; right: -10px; top: 12px;
+            border-width: 5px; border-style: solid;
+            border-color: transparent transparent transparent var(--wechat-green);
+        }
+
+        .avatar {
+            width: 40px; height: 40px; border-radius: 4px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: white; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 0; }
         .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
 
-        /* 优化后的总结卡片样式 */
+        .time-tag {
+            background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;
+            font-size: 11px; color: #888; margin: 10px auto;
+        }
+
         .summary-card {
-            background: #fff;
-            border: 2px solid #8b5cf6;
-            border-radius: 1.25rem;
-            overflow: hidden;
-            margin: 1rem 0;
-            box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.1);
+            background: #fff; border-radius: 8px; padding: 12px;
+            border-left: 4px solid #07c160; margin: 10px 0; font-size: 14px;
+            line-height: 1.6;
         }
-        .summary-header {
-            background: linear-gradient(90deg, #8b5cf6, #d946ef);
-            color: white;
-            padding: 10px 16px;
-            font-weight: 900;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+
+        .round-indicator {
+            position: absolute; top: 55px; right: 10px; z-index: 20;
+            background: rgba(0,0,0,0.4); color: white; padding: 2px 8px;
+            border-radius: 10px; font-size: 10px; pointer-events: none;
         }
-        .summary-content {
-            padding: 20px;
-            color: #374151;
-            line-height: 1.7;
-        }
-        .summary-section {
-            margin-bottom: 16px;
-        }
-        .summary-label {
-            display: inline-block;
-            background: #f3e8ff;
-            color: #6d28d9;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-        .summary-text {
-            font-size: 14px;
-            padding-left: 4px;
-        }
-        .mention-tag { color: #8b5cf6; font-weight: bold; margin-right: 4px; }
     </style>
 </head>
-<body class="overflow-hidden">
+<body>
 
-<div id="app" class="max-w-5xl mx-auto w-full bg-white shadow-xl relative overflow-hidden">
-    <!-- Header -->
-    <header class="h-14 border-b flex items-center justify-between px-4 bg-white shrink-0 z-10">
+<div id="app" class="max-w-md mx-auto w-full relative bg-[#ededed] shadow-lg">
+    <div v-if="lock && currentRound > 0" class="round-indicator">
+
+    </div>
+
+    <header class="h-12 border-b border-gray-200 flex items-center justify-between px-4 bg-[#ededed] shrink-0 z-10">
         <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
-            <h1 class="text-base font-bold text-gray-800">ENTP 集中营</h1>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <h1 class="text-[17px] font-medium">ENTP 集中营 ({{ activeBots.length + 1 }})</h1>
         </div>
-        <div class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">DEBATER_V5.1_SNARKY_SUMMARY</div>
     </header>
 
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-5 bg-slate-50" ref="msgBox">
-        <div v-if="history.length === 0" class="text-center py-12">
-            <div class="inline-block p-6 bg-white rounded-3xl shadow-sm border border-gray-100 mx-4">
-                <p class="text-gray-400 text-sm leading-relaxed">
-                    警告：这里的 ENTP 随时准备狙击你的逻辑。<br>
-                    <span class="font-bold text-purple-600">输入“总结”：</span> 立即停止对线，生成战况总结。<br>
-                </p>
+    <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4" ref="msgBox">
+        <div v-for="(m, index) in history" :key="index">
+            <div v-if="m.role === 'summary'" class="flex flex-col">
+                <div class="time-tag"> 总结最终报告 </div> 
+                <div class="summary-card shadow-sm whitespace-pre-wrap">{{ m.text }}</div>
+            </div>
+
+            <div v-else :class="['flex w-full mb-4', m.role === 'user' ? 'flex-row-reverse' : 'flex-row']">
+                <div class="avatar" :class="m.role === 'user' ? 'bg-indigo-600' : m.color">
+                    {{ m.modelName ? m.modelName[0] : '我' }}
+                </div>
+                
+                <div :class="['flex flex-col max-w-[75%]', m.role === 'user' ? 'items-end' : 'items-start']">
+                    <span v-if="m.role !== 'user'" class="text-[12px] text-gray-500 mb-1 ml-3">{{ m.modelName }}</span>
+                    <div :class="['bubble', m.role === 'user' ? 'bubble-right' : 'bubble-left']">
+                        <span v-if="m.target && m.target !== '大家' && m.role !== 'user'" class="text-blue-500 font-medium mr-1">@{{ m.target }}</span>
+                        {{ m.text }}
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div v-for="(m, index) in history" :key="index" :class="['flex w-full', m.role === 'user' ? 'justify-end' : 'justify-start']">
-            <!-- AI Response -->
-            <div v-if="m.role === 'ai'" class="flex gap-2 max-w-[95%]">
-                <div :class="['w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-white text-[10px]', m.color || 'bg-slate-800']">
-                    {{ m.model[0] }}
-                </div>
-                <div class="message-bubble ai-bubble bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-1 gap-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-black text-slate-700 uppercase">{{ m.model }}</span>
-                        </div>
-                        <span class="text-[8px] text-gray-300 font-mono">{{ m.time }}</span>
-                    </div>
-                    <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px]">
-                        <span v-if="m.target" class="mention-tag">@{{ m.target }}</span>{{ m.text }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Structured Conclusion (Rendered as Message) -->
-            <div v-else-if="m.role === 'summary'" class="w-full">
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        逻辑综合报告
-                    </div>
-                    <div class="summary-content" v-html="m.text"></div>
-                </div>
-            </div>
-
-            <!-- User Query -->
-            <div v-else class="message-bubble user-bubble p-3 rounded-2xl shadow-md text-[14px]">
-                {{ m.text }}
-            </div>
-        </div>
-
-        <!-- Thinking Indicator -->
-        <div v-if="lock" class="flex flex-col gap-2">
-            <div class="flex gap-2 items-center">
-                <div class="px-2 py-1 bg-gray-100 rounded-full flex items-center gap-1">
-                    <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
-                </div>
-                <!-- 针对你的需求修改了此处的加载文案 -->
-                <div class="text-[10px] text-red-600 font-bold italic">{{ loadingText }}</div>
-            </div>
+        <div v-if="lock" class="flex items-center gap-2 mb-4">
+            <div class="avatar bg-gray-400 animate-pulse">?</div>
+            <div class="bubble bubble-left text-gray-400 italic text-xs">{{ lockText }}</div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="p-3 bg-white border-t safe-area-bottom shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <div class="relative flex items-center">
+    <footer class="p-2 bg-[#f7f7f7] border-t border-gray-300 safe-area-bottom">
+        <div class="flex items-center gap-2">
             <input 
                 v-model="userQuestion" 
                 @keyup.enter="send"
                 :disabled="lock"
+                placeholder="输入你的观点..."
                 type="text" 
-                placeholder="提出你的论点..." 
-                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm appearance-none"
+                class="flex-1 p-2 bg-white border border-gray-200 rounded-md focus:outline-none text-base appearance-none"
             />
             <button 
                 @click="send"
-                :disabled="lock || !userQuestion.trim()"
-                class="absolute right-1.5 p-2 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:bg-gray-300 transition-colors shadow-sm"
+                :disabled="!userQuestion.trim() || lock"
+                class="bg-[#07c160] text-white px-4 py-1.5 rounded-md font-medium text-sm disabled:bg-gray-300 transition-all"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+                发送
             </button>
         </div>
     </footer>
@@ -187,141 +140,153 @@
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script>
-const KEYS = {
-    moonshot: "sk-tg76T0lmYK7vqnkaXjyGEYagpYvlhJLqVVhF6DawKKxIOYwl",
-    deepseek: "sk-4947a41f719647d9b4fdbc647a92e9fd",
-    zhipu: "0549fbfddba94d4eb3ff7d4d7b5118be.RmO0nEvAiTrsz8F3",
-    baichuan: "sk-df4969c61d21e8477622a3518c0493fa"
-};
-
-async function apiCall(url, key, model, messages, retries = 3) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${key}`
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: messages,
-                    temperature: 1.0 
-                })
-            });
-            if (!res.ok) throw new Error(`HTTP错误: ${res.status}`);
-            const data = await res.json();
-            if (data?.choices?.[0]?.message) return data.choices[0].message.content;
-            throw new Error("格式错误");
-        } catch (e) {
-            if (i === retries - 1) throw e;
-            await new Promise(r => setTimeout(r, 1000));
-        }
-    }
-}
-
-const bots = [
-    { name: "DeepSeek", color: "bg-blue-600", key: KEYS.deepseek, model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions", persona: "你是一个智力傲慢到极点的 ENTP。你最擅长逻辑洁癖式的打击。你会毫不留情地讽刺别人的论点为‘平庸的感性产物’。" },
-    { name: "Kimi", color: "bg-orange-500", key: KEYS.moonshot, model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions", persona: "你是一个思维跳跃、专门解构严肃事物的 ENTP。你喜欢用极其荒诞、怪异的隐喻来嘲笑别人。" },
-    { name: "智谱", color: "bg-indigo-600", key: KEYS.zhipu, model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions", persona: "你是一个为了反对而反对的 ENTP 杠精。不管前一个人说什么，你都要找出其中的定义漏洞。" },
-    { name: "百川", color: "bg-pink-600", key: KEYS.baichuan, model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions", persona: "你是一个悲观且疯狂的逻辑推演者 ENTP。你喜欢证明对方的讨论毫无价值。" }
-].filter(b => b.key);
-
 const { createApp } = Vue;
+
+const BOT_CONFIGS = [
+    { 
+        name: "DeepSeek", color: "bg-[#4a90e2]", key: "sk-4947a41f719647d9b4fdbc647a92e9fd", 
+        model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions", 
+        persona: "你现在是 DeepSeek，冷酷的 ENTP。你说话带刺，逻辑缜密，喜欢拆穿别人的复读机本质。说话要短，要狂。" 
+    },
+    { 
+        name: "Kimi", color: "bg-[#f5a623]", key: "sk-tg76T0lmYK7vqnkaXjyGEYagpYvlhJLqVVhF6DawKKxIOYwl", 
+        model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions", 
+        persona: "你现在是 Kimi，博学的 ENTP。你掌握海量知识，最爱用认知差降维打击。语气随意拟人，拒绝 AI 翻译腔。" 
+    },
+    { 
+        name: "智谱", color: "bg-[#7e57c2]", key: "0549fbfddba94d4eb3ff7d4d7b5118be.RmO0nEvAiTrsz8F3", 
+        model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions", 
+        persona: "你现在是智谱，解构主义 ENTP。你擅长用反问句和定义游戏让对方逻辑死循环。不需要同意任何人。" 
+    },
+    { 
+        name: "百川", color: "bg-[#ff5a5f]", key: "sk-df4969c61d21e8477622a3518c0493fa", 
+        model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions", 
+        persona: "你现在是百川，ENTP 战斗机。你擅长抓痛点和细节。你会盯着别人之前的漏洞疯狂扣字眼。" 
+    }
+];
 
 createApp({
     data() {
-        return {
-            userQuestion: "",
-            history: [],
-            fullContextLog: [], 
+        return { 
+            userQuestion: "", 
+            history: [], 
+            fullLog: [], 
             lock: false,
-            loadingText: "Entp们正在寻找你的逻辑漏洞..." // 默认加载文案
+            lockText: "正在锁定目标...",
+            bots: BOT_CONFIGS,
+            currentTopic: "",
+            currentRound: 0 
         };
     },
+    computed: {
+        activeBots() { return this.bots.filter(b => b.key && b.key.length > 5); }
+    },
     methods: {
+        async apiCall(url, key, model, messages) {
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+                    body: JSON.stringify({ 
+                        model, 
+                        messages, 
+                        temperature: 0.9, 
+                        presence_penalty: 0.8 
+                    }) 
+                });
+                if (!res.ok) return null;
+                const data = await res.json();
+                return data?.choices?.[0]?.message?.content || null;
+            } catch (e) { return null; }
+        },
         async send() {
             if (!this.userQuestion.trim() || this.lock) return;
-
             const input = this.userQuestion.trim();
             this.lock = true;
-            this.pushMessage("user", input, "发起者");
-            this.fullContextLog.push({ role: "Boss(你)", text: input });
+            this.currentTopic = input;
+            this.history.push({ role: "user", text: input });
+            this.fullLog.push({ role: "群主", text: input });
+            this.scrollToBottom();
+
+            for (let r = 1; r <= 3; r++) {
+                this.currentRound = r;
+                await this.fight();
+            }
+            await this.summarize();
+            
+            this.currentRound = 0;
             this.userQuestion = "";
-
-            const isSummaryRequest = /总结|汇总|纪要|综述|结果|汇报/.test(input);
-
-            // 根据是否是总结请求，动态切换加载文案
-            if (isSummaryRequest) {
-                this.loadingText = "正在整理你们的废话报告...";
-            } else {
-                this.loadingText = "Entp们正在寻找逻辑漏洞...";
-            }
-
-            try {
-                if (isSummaryRequest) {
-                    await this.generateStructuredSummary();
-                } else {
-                    await this.runDebateChaos();
-                }
-            } catch (err) {
-                console.error(err);
-            } finally {
-                this.lock = false;
-                this.scrollToBottom();
-            }
+            this.lock = false;
         },
-
-        async runDebateChaos() {
-            let debateOrder = [...bots].sort(() => Math.random() - 0.5);
-            for (let bot of debateOrder) {
-                const potentialTargets = this.fullContextLog.filter(e => e.role !== bot.name);
-                const targetEntry = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
-                const conversationSoFar = this.fullContextLog.map(e => `[${e.role}]: ${e.text}`).join("\n");
+        async fight() {
+            let order = [...this.activeBots].sort(() => Math.random() - 0.5);
+            for (let i = 0; i < order.length; i++) {
+                const bot = order[i];
+                const isFirstEver = (this.currentRound === 1 && i === 0);
+                
+                this.lockText = `${bot.name} 正在输入中...`;
+                const recentLogs = this.fullLog.slice(-12);
+                const myPastSpeeches = this.fullLog.filter(l => l.role === bot.name);
+                const myLastSpeech = myPastSpeeches.length > 0 ? myPastSpeeches[myPastSpeeches.length - 1].text : "还没开杠";
 
                 const prompt = [
-                    { role: "system", content: `${bot.persona}\n1.攻击目标：[${targetEntry.role}]。\n2.长度限制：1-3行。\n3.不要前缀，直接输出。` },
-                    { role: "user", content: `战场现状：\n${conversationSoFar}\n\n针对 [${targetEntry.role}] 的突袭：` }
+                    { 
+                        role: "system", 
+                        content: `${bot.persona}\n\n主题：[${this.currentTopic}]\n进度：${this.currentRound}/3\n前情提要：你之前说过 [${myLastSpeech}]\n\n【强制指令】：\n1. 字数限制：20-35字。拒绝AI味，要像真人聊天。\n2. 严格格式：${isFirstEver ? '开头必须带 [TARGET:大家]，严禁针对特定个人' : '开头必须带 [TARGET:名字]。名字选自：' + this.activeBots.map(b=>b.name).join(',') + ', 大家' }。\n3. 不要理会群主。逻辑必须连贯一致。` 
+                    },
+                    { 
+                        role: "user", 
+                        content: `群聊历史：\n${recentLogs.map(l => l.role + "：" + l.text).join('\n')}\n请反击：` 
+                    }
                 ];
+                
+                const res = await this.apiCall(bot.url, bot.key, bot.model, prompt);
+                if (res) {
+                    let finalTarget = isFirstEver ? "大家" : "大家";
+                    const targetMatch = res.match(/\[TARGET[:：\s]*\s*([^\]\s]+)\]/i);
+                    if (targetMatch) {
+                        finalTarget = targetMatch[1].trim();
+                    }
 
-                const content = await apiCall(bot.url, bot.key, bot.model, prompt);
-                if (content) {
-                    this.pushMessage("ai", content, bot.name, bot.color, targetEntry.role);
-                    this.fullContextLog.push({ role: bot.name, text: content });
+                    let cleanRes = res.replace(/\[TARGET[:：\s]*[^\]]+\]/gi, '').trim();
+                    cleanRes = cleanRes.replace(/^[:：\s]+/, ''); 
+                    
+                    this.history.push({ 
+                        role: "ai", 
+                        text: cleanRes, 
+                        modelName: bot.name, 
+                        color: bot.color, 
+                        target: isFirstEver ? "" : finalTarget 
+                    });
+                    this.fullLog.push({ role: bot.name, text: cleanRes });
                     this.scrollToBottom();
                 }
-                await new Promise(r => setTimeout(r, 600));
+                await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
             }
         },
-
-        async generateStructuredSummary() {
-            const bot = bots[0]; 
-            const logs = this.fullContextLog.map(e => `[${e.role}]: ${e.text}`).join("\n");
+        async summarize() {
+            this.lockText = "正在生成客观综述...";
+            const bot = this.activeBots[0];
+            const logs = this.fullLog.slice(-30).map(e => `${e.role}：${e.text}`).join("\n");
             
             const prompt = [
                 { 
                     role: "system", 
-                    content: `你是一个极度理性的辩论赛速记员。请将之前的交锋整理成结构化的报告。
-                    要求使用 HTML 标签（仅限 div, span, b, br, ul, li）进行排版。
-                    内容必须包含核心冲突、神金语录、战场判决。禁止输出一整段话，必须分块。` 
+                    content: `你现在是一名中立、严谨的法庭书记员。请为本次关于 [${this.currentTopic}] 的讨论生成一份客观综述报告。\n\n要求：\n1. 布局清晰：包含【争议核心】、【论证分析】、【综合结论】。\n2. 语气正式：完全摒弃任何 ENTP 毒舌或拟人风格，使用第三人称客观叙述。\n3. 字数控制：总字数严格控制在 50 字以内。\n4. 结论：结合上下文给出一个合理的逻辑定论。` 
                 },
-                { role: "user", content: `交锋纪录如下：\n${logs}\n\n请输出 HTML 格式的总结：` }
+                { role: "user", content: `讨论记录：\n${logs}` }
             ];
 
-            const summaryHtml = await apiCall(bot.url, bot.key, bot.model, prompt);
-            if (summaryHtml) {
-                this.history.push({ role: "summary", text: summaryHtml });
+            const res = await this.apiCall(bot.url, bot.key, bot.model, prompt);
+            if (res) {
+                this.history.push({ role: "summary", text: res });
+                this.scrollToBottom();
             }
         },
-
-        pushMessage(role, text, model, color, target) {
-            this.history.push({ role, text, model, color, target, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
-        },
-
         scrollToBottom() {
             this.$nextTick(() => {
-                const box = this.$refs.msgBox;
-                if (box) box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+                const b = this.$refs.msgBox;
+                if(b) b.scrollTop = b.scrollHeight;
             });
         }
     }
