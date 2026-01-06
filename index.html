@@ -17,7 +17,6 @@
             background-color: var(--wechat-bg); 
             -webkit-tap-highlight-color: transparent;
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
-            /* 修复：使用 dvh (Dynamic Viewport Height) 解决移动端地址栏遮挡问题 */
             height: 100vh;
             height: 100dvh;
             margin: 0;
@@ -62,7 +61,6 @@
         }
 
         .custom-scrollbar::-webkit-scrollbar { width: 0; }
-        /* 修复：确保安全区域留白 */
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
         .time-tag {
@@ -75,20 +73,12 @@
             border-left: 4px solid #07c160; margin: 10px 0; font-size: 14px;
             line-height: 1.6;
         }
-
-        .round-indicator {
-            position: absolute; top: 55px; right: 10px; z-index: 20;
-            background: rgba(0,0,0,0.4); color: white; padding: 2px 8px;
-            border-radius: 10px; font-size: 10px; pointer-events: none;
-        }
     </style>
 </head>
 <body>
 
 <div id="app" class="max-w-md mx-auto w-full bg-[#ededed] shadow-lg">
-    <div v-if="lock && currentRound > 0" class="round-indicator">
-        Round {{ currentRound }}
-    </div>
+    <!-- 已移除 round-indicator 轮次显示 -->
 
     <header class="h-12 border-b border-gray-200 flex items-center justify-between px-4 bg-[#ededed] shrink-0 z-10">
         <div class="flex items-center gap-2">
