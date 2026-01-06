@@ -2,12 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <title>ENTP 讨论组</title>
+    <title>ENTP 集中营</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --accent: #10a37f;
+            --accent: #8b5cf6;
             --bg-chat: #f4f7f9;
         }
         body { 
@@ -28,7 +28,7 @@
             max-width: 88%;
             transition: all 0.2s ease;
         }
-        .ai-bubble { border-left: 4px solid #8b5cf6; } /* 紫色调符合 ENTP 视觉 */
+        .ai-bubble { border-left: 4px solid #8b5cf6; }
         .user-bubble { background-color: #8b5cf6; color: white; }
         
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
@@ -42,29 +42,21 @@
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-        .safe-area-bottom {
-            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-        }
-        
-        .conflict-tag {
-            font-size: 10px;
-            padding: 1px 5px;
-            border-radius: 4px;
-            background: #ede9fe;
-            color: #7c3aed;
-            font-weight: bold;
-        }
+        .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
 
+        /* 优化后的总结卡片样式 */
         .summary-card {
             background: #fff;
             border: 2px solid #8b5cf6;
-            border-radius: 1.5rem;
+            border-radius: 1.25rem;
             overflow: hidden;
+            margin: 1rem 0;
+            box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.1);
         }
         .summary-header {
-            background: #8b5cf6;
+            background: linear-gradient(90deg, #8b5cf6, #d946ef);
             color: white;
-            padding: 8px 16px;
+            padding: 10px 16px;
             font-weight: 900;
             font-size: 14px;
             display: flex;
@@ -72,11 +64,28 @@
             gap: 8px;
         }
         .summary-content {
-            padding: 16px;
-            color: #1e1b4b;
-            line-height: 1.6;
+            padding: 20px;
+            color: #374151;
+            line-height: 1.7;
         }
-        .summary-content strong { color: #6d28d9; border-bottom: 2px solid #ddd6fe; }
+        .summary-section {
+            margin-bottom: 16px;
+        }
+        .summary-label {
+            display: inline-block;
+            background: #f3e8ff;
+            color: #6d28d9;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .summary-text {
+            font-size: 14px;
+            padding-left: 4px;
+        }
+        .mention-tag { color: #8b5cf6; font-weight: bold; margin-right: 4px; }
     </style>
 </head>
 <body class="overflow-hidden">
@@ -85,10 +94,10 @@
     <!-- Header -->
     <header class="h-14 border-b flex items-center justify-between px-4 bg-white shrink-0 z-10">
         <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-            <h1 class="text-base font-bold text-gray-800">ENTP 讨论组</h1>
+            <div class="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
+            <h1 class="text-base font-bold text-gray-800">ENTP 集中营</h1>
         </div>
-        <div class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">DEBATER_V3.8</div>
+        <div class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">DEBATER_V5.1_SNARKY_SUMMARY</div>
     </header>
 
     <!-- Chat Area -->
@@ -96,9 +105,8 @@
         <div v-if="history.length === 0" class="text-center py-12">
             <div class="inline-block p-6 bg-white rounded-3xl shadow-sm border border-gray-100 mx-4">
                 <p class="text-gray-400 text-sm leading-relaxed">
-                    欢迎来到 ENTP 集中营。<br>
-                    在此发起挑战，四个 ENTP 将基于上下文持续拆台。<br>
-                    <span class="text-[10px] mt-2 block text-purple-500 font-bold underline decoration-wavy">提示：输入“帮我总结”可获取讨论纪要</span>
+                    警告：这里的 ENTP 随时准备狙击你的逻辑。<br>
+                    <span class="font-bold text-purple-600">输入“总结”：</span> 立即停止对线，生成战况总结。<br>
                 </p>
             </div>
         </div>
@@ -113,11 +121,25 @@
                     <div class="flex items-center justify-between mb-1 gap-4">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-black text-slate-700 uppercase">{{ m.model }}</span>
-                            <span v-if="m.isCounter" class="conflict-tag">拆个台</span>
                         </div>
                         <span class="text-[8px] text-gray-300 font-mono">{{ m.time }}</span>
                     </div>
-                    <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px]">{{ m.text }}</div>
+                    <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px]">
+                        <span v-if="m.target" class="mention-tag">@{{ m.target }}</span>{{ m.text }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structured Conclusion (Rendered as Message) -->
+            <div v-else-if="m.role === 'summary'" class="w-full">
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        逻辑综合报告
+                    </div>
+                    <div class="summary-content" v-html="m.text"></div>
                 </div>
             </div>
 
@@ -133,19 +155,9 @@
                 <div class="px-2 py-1 bg-gray-100 rounded-full flex items-center gap-1">
                     <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
                 </div>
-                <div class="text-[10px] text-purple-600 font-bold italic">ENTP 们正在疯狂博弈中...</div>
+                <!-- 针对你的需求修改了此处的加载文案 -->
+                <div class="text-[10px] text-red-600 font-bold italic">{{ loadingText }}</div>
             </div>
-        </div>
-
-        <!-- Structured Conclusion (Only shows when requested) -->
-        <div v-if="unifiedAnswer" class="mt-6 mb-8 summary-card shadow-lg">
-            <div class="summary-header">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
-                讨论组脑洞纪要
-            </div>
-            <div class="summary-content text-[14px] whitespace-pre-wrap" v-html="formattedUnifiedAnswer"></div>
         </div>
     </main>
 
@@ -157,13 +169,13 @@
                 @keyup.enter="send"
                 :disabled="lock"
                 type="text" 
-                placeholder="继续杠下去，或者要求“总结一下”..." 
-                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm appearance-none"
+                placeholder="提出你的论点..." 
+                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm appearance-none"
             />
             <button 
                 @click="send"
                 :disabled="lock || !userQuestion.trim()"
-                class="absolute right-1.5 p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-gray-300 transition-colors shadow-sm"
+                class="absolute right-1.5 p-2 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:bg-gray-300 transition-colors shadow-sm"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3" />
@@ -182,34 +194,37 @@ const KEYS = {
     baichuan: "sk-df4969c61d21e8477622a3518c0493fa"
 };
 
-async function apiCall(url, key, model, messages) {
-    let cleanMessages = messages.filter(m => m.content && m.content.trim() !== "");
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${key}`
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: cleanMessages,
-                temperature: 1.0 
-            })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
-        return data.choices[0].message.content;
-    } catch (e) {
-        throw e;
+async function apiCall(url, key, model, messages, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${key}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    temperature: 1.0 
+                })
+            });
+            if (!res.ok) throw new Error(`HTTP错误: ${res.status}`);
+            const data = await res.json();
+            if (data?.choices?.[0]?.message) return data.choices[0].message.content;
+            throw new Error("格式错误");
+        } catch (e) {
+            if (i === retries - 1) throw e;
+            await new Promise(r => setTimeout(r, 1000));
+        }
     }
 }
 
 const bots = [
-    { name: "DeepSeek", color: "bg-blue-600", key: KEYS.deepseek, model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions", persona: "你是一个智力自负的 ENTP。你喜欢用精密的逻辑陷阱来戏弄对方，语气充满玩世不恭。" },
-    { name: "Kimi", color: "bg-orange-500", key: KEYS.moonshot, model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions", persona: "你是一个语速极快、思维跳跃的 ENTP。你根本不在乎立场，只在乎推翻当下结论。" },
-    { name: "智谱", color: "bg-indigo-600", key: KEYS.zhipu, model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions", persona: "你是一个善于质疑权威的 ENTP。你最讨厌陈词滥调，总是从相反角度切入证明其荒谬。" },
-    { name: "百川", color: "bg-pink-600", key: KEYS.baichuan, model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions", persona: "你是一个混乱中立的 ENTP。你喜欢通过‘如果……那么……’的极限推导带偏讨论。" }
+    { name: "DeepSeek", color: "bg-blue-600", key: KEYS.deepseek, model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions", persona: "你是一个智力傲慢到极点的 ENTP。你最擅长逻辑洁癖式的打击。你会毫不留情地讽刺别人的论点为‘平庸的感性产物’。" },
+    { name: "Kimi", color: "bg-orange-500", key: KEYS.moonshot, model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions", persona: "你是一个思维跳跃、专门解构严肃事物的 ENTP。你喜欢用极其荒诞、怪异的隐喻来嘲笑别人。" },
+    { name: "智谱", color: "bg-indigo-600", key: KEYS.zhipu, model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions", persona: "你是一个为了反对而反对的 ENTP 杠精。不管前一个人说什么，你都要找出其中的定义漏洞。" },
+    { name: "百川", color: "bg-pink-600", key: KEYS.baichuan, model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions", persona: "你是一个悲观且疯狂的逻辑推演者 ENTP。你喜欢证明对方的讨论毫无价值。" }
 ].filter(b => b.key);
 
 const { createApp } = Vue;
@@ -220,17 +235,9 @@ createApp({
             userQuestion: "",
             history: [],
             fullContextLog: [], 
-            unifiedAnswer: "",
-            lock: false
+            lock: false,
+            loadingText: "Entp们正在寻找你的逻辑漏洞..." // 默认加载文案
         };
-    },
-    computed: {
-        formattedUnifiedAnswer() {
-            if (!this.unifiedAnswer) return "";
-            return this.unifiedAnswer
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
-        }
     },
     methods: {
         async send() {
@@ -238,78 +245,77 @@ createApp({
 
             const input = this.userQuestion.trim();
             this.lock = true;
-            this.unifiedAnswer = ""; // 重置总结显示
-
-            // 检查用户是否在请求总结
-            const isRequestingSummary = /总结|汇总|纪要|综述|结果/.test(input);
-
             this.pushMessage("user", input, "发起者");
-            this.fullContextLog.push({ role: "Boss", text: input });
+            this.fullContextLog.push({ role: "Boss(你)", text: input });
             this.userQuestion = "";
 
+            const isSummaryRequest = /总结|汇总|纪要|综述|结果|汇报/.test(input);
+
+            // 根据是否是总结请求，动态切换加载文案
+            if (isSummaryRequest) {
+                this.loadingText = "正在整理你们的废话报告...";
+            } else {
+                this.loadingText = "Entp们正在寻找逻辑漏洞...";
+            }
+
             try {
-                // 1. 常规辩论流程
-                for (let i = 0; i < bots.length; i++) {
-                    const bot = bots[i];
-                    try {
-                        const contextString = this.fullContextLog
-                            .map(entry => `[${entry.role}]: ${entry.text}`)
-                            .join("\n\n");
-
-                        const prompt = [
-                            { 
-                                role: "system", 
-                                content: `${bot.persona} 你在 ENTP 讨论组中。基于【历史对话】回怼前人，禁止复读，字数 90 以内。` 
-                            },
-                            { role: "user", content: `【历史对话】：\n${contextString}\n\n请发言：` }
-                        ];
-
-                        const content = await apiCall(bot.url, bot.key, bot.model, prompt);
-                        
-                        this.pushMessage("ai", content, bot.name, bot.color, i > 0);
-                        this.fullContextLog.push({ role: bot.name, text: content });
-                        this.scrollToBottom();
-                        
-                        await new Promise(r => setTimeout(r, 400));
-                        
-                    } catch (e) {
-                        this.pushMessage("ai", `[思维故障: ${e.message}]`, bot.name, "bg-gray-400", false);
-                    }
+                if (isSummaryRequest) {
+                    await this.generateStructuredSummary();
+                } else {
+                    await this.runDebateChaos();
                 }
-
-                // 2. 只有在主动要求总结时才生成总结卡片
-                if (isRequestingSummary) {
-                    const summaryContext = this.fullContextLog
-                        .map(entry => `[${entry.role}]: ${entry.text}`)
-                        .join("\n\n");
-
-                    const summary = await apiCall(bots[0].url, bots[0].key, bots[0].model, [
-                        { 
-                            role: "system", 
-                            content: `你是一个观察者。请总结上述 ENTP 的乱斗内容。包含：🚩 核心逻辑崩坏点、⚔️ 脑洞大逃杀、💡 最终伪共识。` 
-                        },
-                        { role: "user", content: `交锋纪录：\n${summaryContext}\n\n请提交总结：` }
-                    ]);
-                    this.unifiedAnswer = summary;
-                }
-
             } catch (err) {
-                console.error("对话异常:", err);
+                console.error(err);
             } finally {
                 this.lock = false;
                 this.scrollToBottom();
             }
         },
 
-        pushMessage(role, text, model, color, isCounter = false) {
-            this.history.push({
-                role,
-                text,
-                model,
-                color,
-                isCounter,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
+        async runDebateChaos() {
+            let debateOrder = [...bots].sort(() => Math.random() - 0.5);
+            for (let bot of debateOrder) {
+                const potentialTargets = this.fullContextLog.filter(e => e.role !== bot.name);
+                const targetEntry = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
+                const conversationSoFar = this.fullContextLog.map(e => `[${e.role}]: ${e.text}`).join("\n");
+
+                const prompt = [
+                    { role: "system", content: `${bot.persona}\n1.攻击目标：[${targetEntry.role}]。\n2.长度限制：1-3行。\n3.不要前缀，直接输出。` },
+                    { role: "user", content: `战场现状：\n${conversationSoFar}\n\n针对 [${targetEntry.role}] 的突袭：` }
+                ];
+
+                const content = await apiCall(bot.url, bot.key, bot.model, prompt);
+                if (content) {
+                    this.pushMessage("ai", content, bot.name, bot.color, targetEntry.role);
+                    this.fullContextLog.push({ role: bot.name, text: content });
+                    this.scrollToBottom();
+                }
+                await new Promise(r => setTimeout(r, 600));
+            }
+        },
+
+        async generateStructuredSummary() {
+            const bot = bots[0]; 
+            const logs = this.fullContextLog.map(e => `[${e.role}]: ${e.text}`).join("\n");
+            
+            const prompt = [
+                { 
+                    role: "system", 
+                    content: `你是一个极度理性的辩论赛速记员。请将之前的交锋整理成结构化的报告。
+                    要求使用 HTML 标签（仅限 div, span, b, br, ul, li）进行排版。
+                    内容必须包含核心冲突、神金语录、战场判决。禁止输出一整段话，必须分块。` 
+                },
+                { role: "user", content: `交锋纪录如下：\n${logs}\n\n请输出 HTML 格式的总结：` }
+            ];
+
+            const summaryHtml = await apiCall(bot.url, bot.key, bot.model, prompt);
+            if (summaryHtml) {
+                this.history.push({ role: "summary", text: summaryHtml });
+            }
+        },
+
+        pushMessage(role, text, model, color, target) {
+            this.history.push({ role, text, model, color, target, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
         },
 
         scrollToBottom() {
