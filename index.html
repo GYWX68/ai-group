@@ -1,145 +1,298 @@
 <!doctype html>
+
 <html lang="zh-CN">
+
 <head>
+
     <meta charset="utf-8"/>
+
     <title>ENTP 逻辑狂想曲</title>  
+
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
+
         :root {
+
             --wechat-bg: #ededed;
+
             --wechat-green: #95ec69;
+
             --wechat-white: #ffffff;
+
             --wechat-text: #191919;
+
             --wechat-gray: #b2b2b2;
+
         }
+
         body { 
+
             background-color: var(--wechat-bg); 
+
             -webkit-tap-highlight-color: transparent;
+
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+
             height: 100vh;
+
             margin: 0;
+
             overflow: hidden;
+
             color: var(--wechat-text);
+
         }
+
         #app { height: 100%; display: flex; flex-direction: column; }
+
         
+
         .bubble {
+
             position: relative;
+
             padding: 10px 12px;
+
             border-radius: 6px;
+
             font-size: 15px;
+
             line-height: 1.4;
+
             max-width: 100%;
+
             word-wrap: break-word;
+
         }
+
+
 
         .bubble-left { background-color: var(--wechat-white); margin-left: 10px; }
+
         .bubble-left::before {
+
             content: ""; position: absolute; left: -10px; top: 12px;
+
             border-width: 5px; border-style: solid;
+
             border-color: transparent var(--wechat-white) transparent transparent;
+
         }
+
+
 
         .bubble-right { background-color: var(--wechat-green); margin-right: 10px; }
+
         .bubble-right::after {
+
             content: ""; position: absolute; right: -10px; top: 12px;
+
             border-width: 5px; border-style: solid;
+
             border-color: transparent transparent transparent var(--wechat-green);
+
         }
+
+
 
         .avatar {
+
             width: 40px; height: 40px; border-radius: 4px; flex-shrink: 0;
+
             display: flex; align-items: center; justify-content: center;
+
             font-weight: bold; color: white; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+
         }
+
+
 
         .custom-scrollbar::-webkit-scrollbar { width: 0; }
+
         .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
 
+
+
         .time-tag {
+
             background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;
+
             font-size: 11px; color: #888; margin: 10px auto;
+
         }
+
+
 
         .summary-card {
+
             background: #fff; border-radius: 8px; padding: 12px;
+
             border-left: 4px solid #07c160; margin: 10px 0; font-size: 14px;
+
             line-height: 1.6;
+
         }
+
+
 
         .round-indicator {
+
             position: absolute; top: 55px; right: 10px; z-index: 20;
+
             background: rgba(0,0,0,0.4); color: white; padding: 2px 8px;
+
             border-radius: 10px; font-size: 10px; pointer-events: none;
+
         }
+
     </style>
+
 </head>
+
 <body>
 
+
+
 <div id="app" class="max-w-md mx-auto w-full relative bg-[#ededed] shadow-lg">
+
     <div v-if="lock && currentRound > 0" class="round-indicator">
+
+
 
     </div>
 
+
+
     <header class="h-12 border-b border-gray-200 flex items-center justify-between px-4 bg-[#ededed] shrink-0 z-10">
+
         <div class="flex items-center gap-2">
+
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+
             <h1 class="text-[17px] font-medium">ENTP 集中营 ({{ activeBots.length + 1 }})</h1>
+
         </div>
+
     </header>
 
+
+
     <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4" ref="msgBox">
+
         <div v-for="(m, index) in history" :key="index">
+
             <div v-if="m.role === 'summary'" class="flex flex-col">
+
                 <div class="time-tag"> 总结最终报告 </div> 
+
                 <div class="summary-card shadow-sm whitespace-pre-wrap">{{ m.text }}</div>
+
             </div>
+
+
 
             <div v-else :class="['flex w-full mb-4', m.role === 'user' ? 'flex-row-reverse' : 'flex-row']">
+
                 <div class="avatar" :class="m.role === 'user' ? 'bg-indigo-600' : m.color">
+
                     {{ m.modelName ? m.modelName[0] : '我' }}
+
                 </div>
+
                 
+
                 <div :class="['flex flex-col max-w-[75%]', m.role === 'user' ? 'items-end' : 'items-start']">
+
                     <span v-if="m.role !== 'user'" class="text-[12px] text-gray-500 mb-1 ml-3">{{ m.modelName }}</span>
+
                     <div :class="['bubble', m.role === 'user' ? 'bubble-right' : 'bubble-left']">
+
                         <span v-if="m.target && m.target !== '大家' && m.role !== 'user'" class="text-blue-500 font-medium mr-1">@{{ m.target }}</span>
+
                         {{ m.text }}
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         <div v-if="lock" class="flex items-center gap-2 mb-4">
+
             <div class="avatar bg-gray-400 animate-pulse">?</div>
+
             <div class="bubble bubble-left text-gray-400 italic text-xs">{{ lockText }}</div>
+
         </div>
+
     </main>
 
+
+
     <footer class="p-2 bg-[#f7f7f7] border-t border-gray-300 safe-area-bottom">
+
         <div class="flex items-center gap-2">
+
             <input 
+
                 v-model="userQuestion" 
+
                 @keyup.enter="send"
+
                 :disabled="lock"
+
                 placeholder="输入你的观点..."
+
                 type="text" 
+
                 class="flex-1 p-2 bg-white border border-gray-200 rounded-md focus:outline-none text-base appearance-none"
+
             />
+
             <button 
+
                 @click="send"
+
                 :disabled="!userQuestion.trim() || lock"
+
                 class="bg-[#07c160] text-white px-4 py-1.5 rounded-md font-medium text-sm disabled:bg-gray-300 transition-all"
+
             >
+
                 发送
+
             </button>
+
         </div>
+
     </footer>
+
 </div>
 
+
+
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
 <script>
+// ✅ 新增：解决手机输入框被键盘遮挡的问题
+function handleInputFocus() {
+    const input = document.querySelector('input[type="text"]');
+    if (input) {
+        input.addEventListener('focus', () => {
+            setTimeout(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            }, 100);
+        });
+    }
+}
+
 const { createApp } = Vue;
 
 const BOT_CONFIGS = [
@@ -291,6 +444,11 @@ createApp({
         }
     }
 }).mount('#app');
+
+// ✅ 调用修复函数
+handleInputFocus();
 </script>
+
 </body>
+
 </html>
