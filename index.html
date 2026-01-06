@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <title>AI 圆桌讨论室 - 同时对话版</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --accent: #10a37f;
+            --bg-chat: #f4f7f9;
+        }
+        body { 
+            background-color: var(--bg-chat); 
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .message-bubble {
+            max-width: 85%;
+            transition: all 0.2s ease;
+        }
+        .ai-bubble { border-left: 4px solid var(--accent); }
+        .user-bubble { background-color: var(--accent); color: white; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        
+        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+        .typing-dot {
+            width: 4px; height: 4px; background: #aaa; border-radius: 50%;
+            display: inline-block; animation: blink 1.4s infinite both;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        .safe-area-bottom {
+            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div id="app" class="flex flex-col h-full max-w-5xl mx-auto w-full bg-white shadow-xl relative">
+    <!-- Header -->
+    <header class="h-14 border-b flex items-center justify-between px-4 bg-white shrink-0 z-10">
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+            <h1 class="text-base font-bold text-gray-800">AI 圆桌讨论室</h1>
+        </div>
+        <div class="text-[9px] text-gray-400 font-mono tracking-tighter">CONCURRENT_V2.0</div>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6 bg-slate-50" ref="msgBox">
+        <div v-if="history.length === 0" class="text-center py-12">
+            <div class="inline-block p-5 bg-white rounded-3xl shadow-sm border border-gray-100">
+                <p class="text-gray-400 text-xs leading-loose">输入你的问题，观察 Kimi、DeepSeek、<br>智谱和百川如何实时碰撞火花。</p>
+            </div>
+        </div>
+
+        <div v-for="(m, index) in history" :key="index" :class="['flex w-full', m.role === 'user' ? 'justify-end' : 'justify-start']">
+            <!-- AI Message -->
+            <div v-if="m.role === 'ai'" class="flex gap-2 max-w-[95%]">
+                <div class="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0 font-bold text-white text-[10px]">
+                    {{ m.model[0] }}
+                </div>
+                <div class="message-bubble ai-bubble bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-1 gap-4">
+                        <span class="text-[10px] font-black text-emerald-700 uppercase">{{ m.model }}</span>
+                        <span class="text-[8px] text-gray-300 font-mono">{{ m.time }}</span>
+                    </div>
+                    <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px] md:text-base">{{ m.text }}</div>
+                </div>
+            </div>
+
+            <!-- User Message -->
+            <div v-else class="message-bubble user-bubble p-3 rounded-2xl shadow-md text-[14px] md:text-base">
+                {{ m.text }}
+            </div>
+        </div>
+
+        <!-- Thinking Indicator -->
+        <div v-if="lock" class="flex flex-col gap-2">
+            <div class="flex gap-2 items-center">
+                <div class="px-2 py-1 bg-gray-100 rounded-full flex items-center gap-1">
+                    <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+                </div>
+                <div class="text-[10px] text-emerald-600 font-bold italic">专家组实时会诊中...</div>
+            </div>
+        </div>
+
+        <!-- Conclusion -->
+        <div v-if="unifiedAnswer" class="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl shadow-inner">
+            <h3 class="flex items-center gap-2 text-emerald-700 font-bold mb-2 text-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                圆桌共识总结
+            </h3>
+            <p class="text-emerald-900 text-sm leading-relaxed">{{ unifiedAnswer }}</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-3 bg-white border-t safe-area-bottom">
+        <div class="relative flex items-center">
+            <input 
+                v-model="userQuestion" 
+                @keyup.enter="send"
+                :disabled="lock"
+                type="text" 
+                placeholder="在此输入问题..." 
+                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm"
+            />
+            <button 
+                @click="send"
+                :disabled="lock || !userQuestion.trim()"
+                class="absolute right-1.5 p-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:bg-gray-300 transition-colors shadow-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+        </div>
+    </footer>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const KEYS = {
+    moonshot: "sk-tg76T0lmYK7vqnkaXjyGEYagpYvlhJLqVVhF6DawKKxIOYwl",
+    deepseek: "sk-4947a41f719647d9b4fdbc647a92e9fd",
+    zhipu: "0549fbfddba94d4eb3ff7d4d7b5118be.RmO0nEvAiTrsz8F3",
+    baichuan: "sk-df4969c61d21e8477622a3518c0493fa"
+};
+
+async function apiCall(url, key, model, messages) {
+    // 基础过滤：Kimi 等模型不允许空内容
+    let cleanMessages = messages.filter(m => m.content && m.content.trim() !== "");
+    
+    // 角色顺序适配：百川/智谱要求最后一条必须是 user
+    const last = cleanMessages[cleanMessages.length - 1];
+    if (last && last.role !== 'user') {
+        cleanMessages.push({ role: 'user', content: "请根据上述背景发表你的看法。" });
+    }
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${key}`
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: cleanMessages,
+                temperature: 0.7
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+        return data.choices[0].message.content;
+    } catch (e) {
+        throw e;
+    }
+}
+
+const bots = [
+    { name: "Kimi", key: KEYS.moonshot, model: "moonshot-v1-8k", url: "https://api.moonshot.cn/v1/chat/completions" },
+    { name: "DeepSeek", key: KEYS.deepseek, model: "deepseek-chat", url: "https://api.deepseek.com/v1/chat/completions" },
+    { name: "智谱 GLM", key: KEYS.zhipu, model: "glm-4", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions" },
+    { name: "百川 AI", key: KEYS.baichuan, model: "Baichuan2-Turbo", url: "https://api.baichuan-ai.com/v1/chat/completions" }
+].filter(b => b.key);
+
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            userQuestion: "",
+            history: [],
+            unifiedAnswer: "",
+            lock: false
+        };
+    },
+    methods: {
+        async send() {
+            if (!this.userQuestion.trim() || this.lock) return;
+
+            const input = this.userQuestion.trim();
+            this.lock = true;
+            this.unifiedAnswer = "";
+            this.userQuestion = "";
+
+            this.pushMessage("user", input, "You");
+
+            try {
+                // 并发执行所有模型请求
+                const results = await Promise.all(bots.map(async (bot) => {
+                    try {
+                        const content = await apiCall(bot.url, bot.key, bot.model, [
+                            { role: "system", content: "你是一位圆桌讨论专家。请独立回答用户问题，字数120以内。" },
+                            { role: "user", content: input }
+                        ]);
+                        this.pushMessage("ai", content, bot.name);
+                        this.scrollToBottom();
+                        return { name: bot.name, content };
+                    } catch (e) {
+                        this.pushMessage("ai", `[连接失败: ${e.message}]`, bot.name);
+                        return null;
+                    }
+                }));
+
+                // 筛选成功结果并总结
+                const validOnes = results.filter(r => r !== null);
+                if (validOnes.length > 0) {
+                    const sumBot = bots[0];
+                    const summaryContext = validOnes.map(v => `[${v.name}]: ${v.content}`).join('\n\n');
+                    const summary = await apiCall(sumBot.url, sumBot.key, sumBot.model, [
+                        { role: "system", content: "你是主持人。请基于各专家意见，总结出一个150字左右的最终结论。" },
+                        { role: "user", content: `原问题：${input}\n\n专家讨论：\n${summaryContext}\n\n请进行共识总结：` }
+                    ]);
+                    this.unifiedAnswer = summary;
+                }
+
+            } catch (err) {
+                console.error("并发执行失败:", err);
+            } finally {
+                this.lock = false;
+                this.scrollToBottom();
+            }
+        },
+
+        pushMessage(role, text, model) {
+            this.history.push({
+                role,
+                text,
+                model,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+        },
+
+        scrollToBottom() {
+            this.$nextTick(() => {
+                const box = this.$refs.msgBox;
+                if (box) box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+            });
+        }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
