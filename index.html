@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <title>AI 员工圆桌会 - 同时对话版</title>
+    <title>AI 员工讨论组 - 同时对话版</title>
+    <!-- 关键修复：增加 viewport-fit=cover 适配刘海屏，防止 iOS 缩放 -->
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -10,18 +11,30 @@
             --accent: #10a37f;
             --bg-chat: #f4f7f9;
         }
+        /* 修复 iOS H-Screen 遮挡问题：优先使用 svh (Small Viewport Height) */
         body { 
             background-color: var(--bg-chat); 
             -webkit-tap-highlight-color: transparent;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            height: 100vh;
+            height: 100svh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         .message-bubble {
-            max-width: 85%;
+            max-width: 88%;
             transition: all 0.2s ease;
         }
         .ai-bubble { border-left: 4px solid var(--accent); }
         .user-bubble { background-color: var(--accent); color: white; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        
+        /* 隐藏默认滚动条，美化显示 */
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
         
         @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
@@ -32,28 +45,33 @@
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
+        /* 修复 iPhone 底部“小横条”遮挡 */
         .safe-area-bottom {
-            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="overflow-hidden">
 
-<div id="app" class="flex flex-col h-full max-w-5xl mx-auto w-full bg-white shadow-xl relative">
+<div id="app" class="max-w-5xl mx-auto w-full bg-white shadow-xl relative overflow-hidden">
     <!-- Header -->
     <header class="h-14 border-b flex items-center justify-between px-4 bg-white shrink-0 z-10">
         <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-            <h1 class="text-base font-bold text-gray-800">AI 员工圆桌会</h1>
+            <h1 class="text-base font-bold text-gray-800">AI 员工讨论组</h1> 
         </div>
-        <div class="text-[9px] text-gray-400 font-mono tracking-tighter">STAFF_CONCURRENT_V2.1</div>
+        <div class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">iOS_OPTIMIZED_V2.2</div>
     </header>
 
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6 bg-slate-50" ref="msgBox">
+    <!-- Chat Area: 确保 flex-1 占据剩余空间并可滚动 -->
+    <main class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-5 bg-slate-50" ref="msgBox">
         <div v-if="history.length === 0" class="text-center py-12">
-            <div class="inline-block p-5 bg-white rounded-3xl shadow-sm border border-gray-100">
-                <p class="text-gray-400 text-xs leading-loose">向您的 AI 员工们下达指令，<br>观察他们如何为您协作思考。</p>
+            <div class="inline-block p-6 bg-white rounded-3xl shadow-sm border border-gray-100 mx-4">
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    向您的 AI 员工们下达指令，<br>
+                    观察他们如何并发协作。<br>
+                    <span class="text-[10px] mt-2 block opacity-60">(iOS 已完成兼容性修复)</span>
+                </p>
             </div>
         </div>
 
@@ -68,17 +86,17 @@
                         <span class="text-[10px] font-black text-slate-700 uppercase">员工：{{ m.model }}</span>
                         <span class="text-[8px] text-gray-300 font-mono">{{ m.time }}</span>
                     </div>
-                    <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px] md:text-base">{{ m.text }}</div>
+                    <div class="text-gray-700 leading-relaxed whitespace-pre-wrap text-[14px]">{{ m.text }}</div>
                 </div>
             </div>
 
             <!-- User Query -->
-            <div v-else class="message-bubble user-bubble p-3 rounded-2xl shadow-md text-[14px] md:text-base">
+            <div v-else class="message-bubble user-bubble p-3 rounded-2xl shadow-md text-[14px]">
                 {{ m.text }}
             </div>
         </div>
 
-        <!-- Updated Thinking Indicator -->
+        <!-- Thinking Indicator -->
         <div v-if="lock" class="flex flex-col gap-2">
             <div class="flex gap-2 items-center">
                 <div class="px-2 py-1 bg-gray-100 rounded-full flex items-center gap-1">
@@ -89,19 +107,19 @@
         </div>
 
         <!-- Conclusion -->
-        <div v-if="unifiedAnswer" class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl shadow-inner">
+        <div v-if="unifiedAnswer" class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl shadow-inner mb-4">
             <h3 class="flex items-center gap-2 text-blue-700 font-bold mb-2 text-xs">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
-                最终执行共识
+                最终执行共识报告
             </h3>
             <p class="text-blue-900 text-sm leading-relaxed">{{ unifiedAnswer }}</p>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="p-3 bg-white border-t safe-area-bottom">
+    <!-- Footer: 关键修复，使用 flex-shrink-0 并固定在底部 -->
+    <footer class="p-3 bg-white border-t safe-area-bottom shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div class="relative flex items-center">
             <input 
                 v-model="userQuestion" 
@@ -109,7 +127,7 @@
                 :disabled="lock"
                 type="text" 
                 placeholder="给员工下达任务..." 
-                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm"
+                class="w-full p-3 pr-12 rounded-2xl border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white disabled:bg-gray-100 transition-all text-sm appearance-none"
             />
             <button 
                 @click="send"
@@ -126,6 +144,7 @@
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script>
+// 同样由于 iPhone 环境，如果 API 没反应，可能是因为 API 的域名禁止了直接跨域访问
 const KEYS = {
     moonshot: "sk-tg76T0lmYK7vqnkaXjyGEYagpYvlhJLqVVhF6DawKKxIOYwl",
     deepseek: "sk-4947a41f719647d9b4fdbc647a92e9fd",
@@ -135,11 +154,9 @@ const KEYS = {
 
 async function apiCall(url, key, model, messages) {
     let cleanMessages = messages.filter(m => m.content && m.content.trim() !== "");
-    
-    // 角色顺序适配
     const last = cleanMessages[cleanMessages.length - 1];
     if (last && last.role !== 'user') {
-        cleanMessages.push({ role: 'user', content: "请根据上述背景发表你的看法。" });
+        cleanMessages.push({ role: 'user', content: "请根据上述背景汇报。" });
     }
 
     try {
@@ -213,8 +230,8 @@ createApp({
                     const sumBot = bots[0];
                     const summaryContext = validOnes.map(v => `[${v.name}]: ${v.content}`).join('\n\n');
                     const summary = await apiCall(sumBot.url, sumBot.key, sumBot.model, [
-                        { role: "system", content: "你是秘书长。请汇总各位员工的意见，给Boss提交一份最终建议。" },
-                        { role: "user", content: `原指令：${input}\n\n员工汇报：\n${summaryContext}\n\n请提交汇总报告：` }
+                        { role: "system", content: "你是秘书长。请汇总各位员工的意见，给Boss提交一份建议。" },
+                        { role: "user", content: `原指令：${input}\n\n员工汇报：\n${summaryContext}\n\n请总结：` }
                     ]);
                     this.unifiedAnswer = summary;
                 }
